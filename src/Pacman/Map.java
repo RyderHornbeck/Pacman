@@ -2,10 +2,13 @@ package Pacman;
 
 public class Map {
     private Entities [][] GridSpaces;
+    private int numRow;
+    private int numCol;
 
     public Map(int numRow, int numCol) {
         this.GridSpaces = new Entities[numRow][numCol];
-
+        this.numRow = numRow;
+        this.numCol = numCol;
 
         //GridSpaces is in Row Major Order
         //aka Gridspaces is an array of row arrays
@@ -70,5 +73,12 @@ public class Map {
             //how to make ghost go over pellets but not eat them and for the pellets to just stay where they are
         }
         return nextObject;
+    }
+
+    public int getNumRow() {
+        return numRow;
+    }
+    public int getNumCol(){
+        return numCol;
     }
 }
