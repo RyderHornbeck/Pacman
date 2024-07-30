@@ -24,9 +24,11 @@ public class Game {
      GhostAlgorithim currentGhostAlgorithim;
      Map map;
      HighScoreDAO highScoreDAO;
+     int[][] shortestDistances;
     public Game(Connection conn){
         Default_MapDAO defaultMapDAO = new Default_MapDAO(conn);
         map = defaultMapDAO.getMap();
+        shortestDistances = new int[map.getNumRow()][map.getNumCol()];
         highScoreDAO = new HighScoreDAO(conn);
         Pellets = 240;
         PowerPellets = 4;
@@ -148,7 +150,11 @@ public class Game {
                     return false;
 
                 }
+            }
 
+            if (!((dx == 0) && (dy == 0))) {
+                //If pacman actually moves, recompute the shortest distances.
+                DetermineShortestDistances();
             }
         }
         catch(InvalidMoveException IME ){
@@ -211,6 +217,7 @@ public class Game {
             }
         }
     }
+
     public void GhostAlgorithim() {
         //call this like onestep, it works with one step each time
 
@@ -236,15 +243,64 @@ public class Game {
             //TODO: FIND NEIGHBORING EMPTY SPACE, CHOSE A RANDOM SPACE, MOVE GHOST TO THAT SPACE
         }
         else if(currentGhostAlgorithim == GhostAlgorithim.CHASE){
-            //TODO:NATHAN WILL SEND THE CHASE ALGORITHIM
+            //Iterate through all the neighboring spaces and choose the one that has the shortest distance to pacman.
+            //  Distances to pacman at any position in the grid is now stored in "shortestDistances".
         }
         else if(currentGhostAlgorithim == GhostAlgorithim.FRIGHTENED){
-            //TODO:NATHAN WILL SEND THE FRIGHTENED ALGORITHIM. THIS ALGORITHIM IS DYNAMIC PROGRAMMING
+            //Iterate through all the neighboring spaces and choose the one that has the furthest distance from pacman.
+            //  Distances to pacman at any position in the grid is now stored in "shortestDistances".
         }
-
-
-
 
     }
 
+    private void UpdateNeighboringShortestDistances(int x, int y) {
+        int myValue = shortestDistances[x][y];
+        int neighboringValue = myValue + 1;
+
+        //Top Neighbor
+        if (y != map.getNumCol()-1){
+            if ((neighboringValue < shortestDistances[x][y+1]) && !(map.GetEachPositionGrid(x,y+1) instanceof Wall)){
+                shortestDistances[x][y+1] = neighboringValue;
+                UpdateNeighboringShortestDistances(x,y+1);
+            }
+        }
+        //Bottom Neighbor
+        if (y != 0){
+            if ((neighboringValue < shortestDistances[x][y-1]) && !(map.GetEachPositionGrid(x,y-1) instanceof Wall)) {
+                shortestDistances[x][y-1] = neighboringValue;
+                UpdateNeighboringShortestDistances(x,y-1);
+            }
+        }
+        //Left Neighbor
+        if (x != 0){
+            if ((neighboringValue < shortestDistances[x-1][y]) && !(map.GetEachPositionGrid(x-1,y) instanceof Wall)) {
+                shortestDistances[x-1][y] = neighboringValue;
+                UpdateNeighboringShortestDistances(x-1,y);
+            }
+        }
+        //Right Neighbor
+        if (x != map.getNumRow()-1){
+            if ((neighboringValue < shortestDistances[x+1][y]) && !(map.GetEachPositionGrid(x+1,y) instanceof Wall)) {
+                shortestDistances[x+1][y] = neighboringValue;
+                UpdateNeighboringShortestDistances(x+1,y);
+            }
+        }
+    }
+
+    private void DetermineShortestDistances(){
+        //First Reset the shortestDistances array
+        for (int x = 0; x < map.getNumRow(); x++){
+            for (int y = 0; y < map.getNumCol(); y++) {
+                shortestDistances[x][y] = 2147483647; //The largest possible int
+            }
+        }
+
+        //Next set the value of shortestDistances at pacman's current position to zero
+        shortestDistances[PacX][PacY] = 0;
+
+        //Starting at this zero position, update all neighboring positions if they are shorter than the currently held value.
+        //  Do this recursively (i.e. for each updated position, repeat the process) if the value was updated.
+        //THIS ALGORITHIM IS "DYNAMIC PROGRAMMING"
+        UpdateNeighboringShortestDistances(PacX,PacY);
+    }
 }
