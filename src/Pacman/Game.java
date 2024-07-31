@@ -135,7 +135,7 @@ public class Game {
                 PacX = PacX+dx;
                 PacY =PacY+dy;
             }
-            if(Nextobj instanceof Pellet){
+             if(Nextobj instanceof Pellet){
                 Score= Score+10;
                 Pellets--;
             }
@@ -169,7 +169,7 @@ public class Game {
 
 
     public void ghostMove(){
-
+            GhostAlgorithim();
     }
     public boolean PowerPelletModeActive(){
 
@@ -251,10 +251,8 @@ public class Game {
             }
         }
         else if(currentGhostAlgorithim == GhostAlgorithim.RANDOM){
+            RandomGhostMove();
 
-            if (int(Math.random())){
-
-            }
             //TODO: FIND NEIGHBORING EMPTY SPACE, CHOSE A RANDOM SPACE, MOVE GHOST TO THAT SPACE
         }
         else if(currentGhostAlgorithim == GhostAlgorithim.CHASE){
@@ -268,22 +266,16 @@ public class Game {
 
 
     }
-    public Entities [] RandomGhostMove()throws InvalidMoveException {
+    public void RandomGhostMove()throws InvalidMoveException {
         Entities [][] GhostSurroundings = new Entities[GhostX.length][4];
         for(int i =0; i<GhostX.length;i++) {
             // The surroundings go in order of North east south west
             GhostSurroundings[i] = map.checkSurroundings(GhostX[i], GhostY[i], GhostSurroundings[i]);
         }
+
         // Ghost1After and Ghost1 are arrays that check the surrounding Entities
 
-        // this if checks if a ghost didnt meet an intersection and is in the same "hallway" as before
-
-
-
-
         int Random  = 0;
-        int Random1  = 0;
-        int numberOfPaths=0;
         ArrayList <ArrayList <Integer>> WhichPathwaysAreNotWallsTracker = new ArrayList <ArrayList <Integer>>(GhostX.length);
         int [] RandomIndexes  =new int[GhostX.length];
         int [] RandomDirections = new int[GhostX.length];
@@ -299,7 +291,9 @@ public class Game {
             RandomIndexes[i] = Random;
             RandomDirections[i] =WhichPathwaysAreNotWallsTracker.get(i).get(RandomIndexes[i]);
         }
-
+        //this whole random block has an arraylist of arraylists and this holds the 4 ghosts valid pathways.
+        //and RandomIndexes holds 4 random indexes of the arraylists inside the bigger arraylist.
+        // RandomDirection holds the 4 new directiions of the 4 ghosts by getting the actual pathway we want from the arraylists using our random indexes
 
 
 
@@ -308,40 +302,28 @@ public class Game {
             int dy =0;
             if(RandomDirections[i]==0){
                 dy=-1;
+
             }
             else if(RandomDirections[i]==1){
                 dx=1;
+
             }
             else if(RandomDirections[i]==2){
                 dy=+1;
+
             }
             else if(RandomDirections[i]==3){
                 dx=-1;
+
             }
-            map.move(GhostX[i],GhostY[i],dx,dy);
-            //TODO;update GhostX and GhostY arrays
+            map.Ghostmove(i,GhostX[i],GhostY[i],dx,dy);
+            GhostX[i]=GhostX[i]+dx;
+            GhostY[i]=GhostY[i]+dy;
+            //TODO;update GhostX and GhostY arrays. Finished
             //TODO; Create an array to track what ghost is on top of
             //TODO; UPDATE  and use that array 
         }
 
 
-        if (!(currentobject instanceof Movers)) {
-            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying move a nonMover");
-
-        }
-        else if( (dx != 0)&& (dy!=0)){
-            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying to move diagonally");
-
-        }
-        else if(nextObject instanceof Wall){
-            ///if you try to move into a wall nothing happens
-
-        }
-        else{
-            GridSpaces[x + dx][y + dy] = currentobject;
-            //how to make ghost go over pellets but not eat them and for the pellets to just stay where they are
-        }
-
-        return nextObject;
     }
 }
