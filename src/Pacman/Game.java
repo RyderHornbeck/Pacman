@@ -8,9 +8,13 @@ enum RoundOutCome{
 
 }
 enum GhostAlgorithim{
-    CHASE,RANDOM,LEAVE_CAGE,FRIGHTENED
+    CHASE,RANDOM,FRIGHTENED
+}
+enum keyboardDirections{
+    up,right,down,left
 }
 public class Game {
+
      int PacLives;
      int PowerPellets;
      int PacX;
@@ -25,11 +29,14 @@ public class Game {
      int ghostPlaceTracker;
      int [] GhostX;
      int[] GhostY;
-
+     int [][] shortestDistances;
      Entities [] GhostsOnTopOf;
      GhostAlgorithim currentGhostAlgorithim;
      Map map;
      HighScoreDAO highScoreDAO;
+     final int [] DefaultGhostX;
+     final int [] DefaultGhostY;
+     boolean [] GhostHasBeenSpawned;
     public Game(Connection conn){
         Default_MapDAO defaultMapDAO = new Default_MapDAO(conn);
         map = defaultMapDAO.getMap();
@@ -40,13 +47,18 @@ public class Game {
         StepCounter =0;
         Score=0;
         PowerPelletModeCount=0;
-        GhostAlgorithimChanger =4;
+        GhostAlgorithimChanger =RandomStepCount;
         ghostPlaceTracker =0;
         GhostsOnTopOf = new Entities[4];
-        currentGhostAlgorithim = GhostAlgorithim.LEAVE_CAGE;
+        currentGhostAlgorithim = GhostAlgorithim.RANDOM;
         FindPac();
         GhostX = new int [] {12,13,14,15};
         GhostY = new int  [] {11,11,11,11};
+        GhostHasBeenSpawned = new boolean []{false,false,false,false};
+        shortestDistances = new int[map.getNumRow()][map.getNumCol()];
+        DefaultGhostX= new int [] {12,13,14,15};
+        DefaultGhostY= new int [] {11,11,11,11};
+        //TODO; make int arr
     }
     public void executeGame(int ID) {
 
@@ -111,22 +123,35 @@ public class Game {
     public void MoveMoversToStart(){
         ghostPlaceTracker =0;
     }
+    public void PacMoveUp(){
+        pacMove(keyboardDirections.up);
+    }
+    public void PacMoveRight(){
 
-    public boolean pacMove(){
+        pacMove(keyboardDirections.right);
+    }
+    public void PacMoveDown(){
+        pacMove(keyboardDirections.down);
+    }
+    public void PacMoveLeft(){
+
+        pacMove(keyboardDirections.left);
+    }
+    public boolean pacMove(keyboardDirections thisDirection){
         int x = PacX;
         int y = PacY;
         int dx=0;
         int dy=0;
-        if(uparrow){
+        if(thisDirection ==keyboardDirections.up){
             dy=1;
         }
-       else  if(downarrow){
+       else  if(thisDirection==keyboardDirections.down){
             dy=-1;
         }
-        else  if(leftarrow){
+        else  if(thisDirection==keyboardDirections.left){
             dx =-1;
         }
-        else  if(Rightarrow){
+        else  if(thisDirection== keyboardDirections.right){
             dx =+1;
         }
         try {
@@ -153,12 +178,25 @@ public class Game {
                 if (PowerPelletModeActive()) {
                     Score = Score + 200;
                     ghostPlaceTracker =0;
+
                     //TODO: code in how to tell java to stop tracking a specific ghost
+                   for(int i =0; i<GhostX.length;i++){
+                       if((GhostX[i]==PacX)&&(GhostY[i]==PacY)){
+                            GhostX[i]=DefaultGhostX[i];
+                            GhostY[i]=DefaultGhostY[i];
+
+                       }
+                   }
+
                 } else {
                     return false;
 
                 }
 
+            }
+            if (!((dx == 0) && (dy == 0))) {
+                //If pacman actually moves, recompute the shortest distances.
+                DetermineShortestDistances();
             }
         }
         catch(InvalidMoveException IME ){
@@ -224,42 +262,59 @@ public class Game {
     public void GhostAlgorithim() {
         //call this like onestep, it works with one step each time
 
+        for(int i=0;i<GhostX.length; i++){
+           if (!GhostHasBeenSpawned[i]){
+               try {
+                    Entities check =map.GhostLeaveCage(i);
+                    if(check != null){
+                        GhostHasBeenSpawned[i]=true;
+                    }
+               }
+               catch(InvalidMoveException Ime){
+                   System.out.println(Ime.getMessage());
+               }
+               break;
+
+           }
+        }
+
         if (StepCounter == GhostAlgorithimChanger) {
-            if (currentGhostAlgorithim == GhostAlgorithim.LEAVE_CAGE) {
-                currentGhostAlgorithim = GhostAlgorithim.RANDOM;
-                GhostAlgorithimChanger += RandomStepCount;
 
-            } else if (currentGhostAlgorithim == GhostAlgorithim.RANDOM) {
-                currentGhostAlgorithim = GhostAlgorithim.CHASE;
-                GhostAlgorithimChanger += ChaseStepCount;
 
-            } else if (currentGhostAlgorithim == GhostAlgorithim.CHASE) {
+            if (currentGhostAlgorithim == GhostAlgorithim.RANDOM) {
+            currentGhostAlgorithim = GhostAlgorithim.CHASE;
+            GhostAlgorithimChanger += ChaseStepCount;
+
+         }   else if (currentGhostAlgorithim == GhostAlgorithim.CHASE) {
                 currentGhostAlgorithim = GhostAlgorithim.RANDOM;
                 GhostAlgorithimChanger += RandomStepCount;
 
             }
         }
-        if(currentGhostAlgorithim == GhostAlgorithim.LEAVE_CAGE){
+
+
+
+       if(currentGhostAlgorithim == GhostAlgorithim.RANDOM){
             try {
-                map.GhostLeaveCage(ghostPlaceTracker);
-                map.AfterGhostLeaveCage();
-                ghostPlaceTracker++;
-                //TODO: TELEPORT THE GHOST OUTSIDE THE BOX ONE BY ONE
+                RandomGhostMove();
             }
             catch(InvalidMoveException IME){
-                IME.getMessage();
+                System.out.println(IME.getMessage());
             }
         }
-        else if(currentGhostAlgorithim == GhostAlgorithim.RANDOM){
-            RandomGhostMove();
-
-            //TODO: FIND NEIGHBORING EMPTY SPACE, CHOSE A RANDOM SPACE, MOVE GHOST TO THAT SPACE
-        }
         else if(currentGhostAlgorithim == GhostAlgorithim.CHASE){
-            //TODO:NATHAN WILL SEND THE CHASE ALGORITHIM
+            try{
+                chaseGhostMove();
+            } catch (InvalidMoveException e) {
+                System.out.println(e.getMessage());
+            }
         }
         else if(currentGhostAlgorithim == GhostAlgorithim.FRIGHTENED){
-            //TODO:NATHAN WILL SEND THE FRIGHTENED ALGORITHIM. THIS ALGORITHIM IS DYNAMIC PROGRAMMING
+            try{
+                FrightenedGhostMove();
+            } catch (InvalidMoveException e) {
+                System.out.println(e.getMessage());
+            }
         }
 
 
@@ -316,14 +371,135 @@ public class Game {
                 dx=-1;
 
             }
-            map.Ghostmove(i,GhostX[i],GhostY[i],dx,dy);
-            GhostX[i]=GhostX[i]+dx;
-            GhostY[i]=GhostY[i]+dy;
-            //TODO;update GhostX and GhostY arrays. Finished
-            //TODO; Create an array to track what ghost is on top of
-            //TODO; UPDATE  and use that array 
+            if((GhostX[i]!=DefaultGhostX[i])&&(GhostY[i]!=DefaultGhostY[i])) {
+                map.Ghostmove(i, GhostX[i], GhostY[i], dx, dy);
+                GhostX[i] = GhostX[i] + dx;
+                GhostY[i] = GhostY[i] + dy;
+
+            }
         }
 
 
     }
+    public void chaseGhostMove() throws InvalidMoveException {
+        int[] dx = {0, 1, 0, -1};
+        int[] dy = {1, 0, -1, 0};
+        for (int j = 0; j < GhostX.length; j++) {
+            int TempShortest = 2147483647;
+            int TempShortestDirection = -1;
+            for (int i = 0; i < dx.length; i++) {
+                int neighborX = GhostX[j] + dx[i];
+                int neighborY = GhostY[j] + dy[i];
+                if ((neighborX < map.getNumRow() && neighborX >= 0) && (neighborY < map.getNumCol() && neighborY >= 0)) {
+                    Entities neighbor = map.GetEachPositionGrid(neighborX, neighborY);
+
+                    if (!(neighbor instanceof Wall)) {
+                        int DistToPacMan = shortestDistances[neighborX][neighborY];
+                        if (DistToPacMan < TempShortest) {
+                            TempShortest = DistToPacMan;
+                            TempShortestDirection = i;
+                        }
+                    }
+
+                }
+            }
+            if (TempShortestDirection == -1) {
+                throw new InvalidMoveException("No possible moves found");
+            }
+            if ((GhostX[j] != DefaultGhostX[j]) && (GhostY[j] != DefaultGhostY[j])) {
+
+                map.Ghostmove(j, GhostX[j], GhostY[j], dx[TempShortestDirection], dy[TempShortestDirection]);
+                GhostX[j] = GhostX[j] + dx[TempShortestDirection];
+                GhostY[j] = GhostY[j] + dy[TempShortestDirection];
+            }
+        }
+    }
+    public void FrightenedGhostMove() throws InvalidMoveException {
+        int[] dx = {0, 1, 0, -1};
+        int[] dy = {1, 0, -1, 0};
+        for (int j = 0; j < GhostX.length; j++) {
+            int TempLongest = -1;
+            int TempLongestDirection = -1;
+            for (int i = 0; i < dx.length; i++) {
+                int neighborX = GhostX[j] + dx[i];
+                int neighborY = GhostY[j] + dy[i];
+                if ((neighborX < map.getNumRow() && neighborX >= 0) && (neighborY < map.getNumCol() && neighborY >= 0)) {
+                    Entities neighbor = map.GetEachPositionGrid(neighborX, neighborY);
+
+                    if (!(neighbor instanceof Wall)) {
+                        int DistToPacMan = shortestDistances[neighborX][neighborY];
+                        if (DistToPacMan > TempLongest) {
+                            TempLongest = DistToPacMan;
+                            TempLongestDirection = i;
+                        }
+                    }
+
+                }
+            }
+            if (TempLongestDirection == -1) {
+                throw new InvalidMoveException("No possible moves found");
+            }
+            if((GhostX[j]!=DefaultGhostX[j])&&(GhostY[j]!=DefaultGhostY[j])) {
+
+                map.Ghostmove(j, GhostX[j], GhostY[j], dx[TempLongestDirection], dy[TempLongestDirection]);
+                GhostX[j] = GhostX[j] + dx[TempLongestDirection];
+                GhostY[j] = GhostY[j] + dy[TempLongestDirection];
+            }
+        }
+    }
+    private void UpdateNeighboringShortestDistances(int x, int y) {
+        int myValue = shortestDistances[x][y];
+        int neighboringValue = myValue + 1;
+
+        //Top Neighbor
+        if (y != map.getNumCol()-1){
+            if ((neighboringValue < shortestDistances[x][y+1]) && !(map.GetEachPositionGrid(x,y+1) instanceof Wall)){
+                shortestDistances[x][y+1] = neighboringValue;
+                UpdateNeighboringShortestDistances(x,y+1);
+            }
+        }
+        //Bottom Neighbor
+        if (y != 0){
+            if ((neighboringValue < shortestDistances[x][y-1]) && !(map.GetEachPositionGrid(x,y-1) instanceof Wall)) {
+                shortestDistances[x][y-1] = neighboringValue;
+                UpdateNeighboringShortestDistances(x,y-1);
+            }
+        }
+        //Left Neighbor
+        if (x != 0){
+            if ((neighboringValue < shortestDistances[x-1][y]) && !(map.GetEachPositionGrid(x-1,y) instanceof Wall)) {
+                shortestDistances[x-1][y] = neighboringValue;
+                UpdateNeighboringShortestDistances(x-1,y);
+            }
+        }
+        //Right Neighbor
+        if (x != map.getNumRow()-1){
+            if ((neighboringValue < shortestDistances[x+1][y]) && !(map.GetEachPositionGrid(x+1,y) instanceof Wall)) {
+                shortestDistances[x+1][y] = neighboringValue;
+                UpdateNeighboringShortestDistances(x+1,y);
+            }
+        }
+    }
+
+    private void DetermineShortestDistances(){
+        //First Reset the shortestDistances array
+        for (int x = 0; x < map.getNumRow(); x++){
+            for (int y = 0; y < map.getNumCol(); y++) {
+                shortestDistances[x][y] = 2147483647; //The largest possible int
+            }
+        }
+
+        //Next set the value of shortestDistances at pacman's current position to zero
+        shortestDistances[PacX][PacY] = 0;
+
+        //Starting at this zero position, update all neighboring positions if they are shorter than the currently held value.
+        //  Do this recursively (i.e. for each updated position, repeat the process) if the value was updated.
+        //THIS ALGORITHIM IS "DYNAMIC PROGRAMMING"
+        UpdateNeighboringShortestDistances(PacX,PacY);
+    }
+
+
+
+
+
 }

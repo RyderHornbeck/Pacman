@@ -20,9 +20,11 @@ public abstract class BaseDataAccessObject {
         }
     }
     public BaseDataAccessObject(Connection conn){
+
         this.conn = conn;
     }
     public Connection getConn(){
+
         return this.conn;
     }
     public BaseDataAccessObject() {

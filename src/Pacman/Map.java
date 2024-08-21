@@ -6,8 +6,12 @@ public class Map {
     Entities [] GhostsBeforeGridSpace;
 
     Entities [] GhostNextObject;
+    int numRow;
+    int numCol;
 public Map(int numRow, int numCol) {
         this.GridSpaces = new Entities[numRow][numCol];
+        this.numRow= numRow;
+        this.numCol =numCol;
         Entities [] GhostNextObject = new Entities[4];
         Entities [] GhostsGridSpace = {GridSpaces[12][11],GridSpaces[13][11],GridSpaces[14][11],GridSpaces[15][11]};
 
@@ -79,7 +83,12 @@ public Map(int numRow, int numCol) {
     }
 
     public Entities GhostLeaveCage(int ghostPlaceTracker)throws InvalidMoveException {
+
         Entities outsideCage = GridSpaces[13][11];
+        if(outsideCage instanceof Ghost){
+            return null;
+        }
+
         ArrayList <Entities>  ghostArr = new ArrayList<Entities>();
             if(GridSpaces[12+ghostPlaceTracker][14] instanceof Ghost){
                 ghostArr.add(GridSpaces[12+ghostPlaceTracker][14]);
@@ -106,30 +115,9 @@ public Map(int numRow, int numCol) {
 
     return GridSpaces[13][11];
     }
-    public void AfterGhostLeaveCage(){
-        if((GridSpaces[13][11] instanceof Ghost)&&(GridSpaces[12][11] instanceof Ghost)&&(GridSpaces[14][11] instanceof Ghost)&&(GridSpaces[15][11] instanceof Ghost)){
-            //do nothing, this marks the end of the ghosts leaving the cage
-        }
-        else if((GridSpaces[13][11] instanceof Ghost)&&(GridSpaces[14][11] instanceof Ghost)&&(GridSpaces[15][11] instanceof Ghost)){
-            Entities TempGhostTracker = GridSpaces[13][11];
-            GridSpaces[12][11] = TempGhostTracker;
-            GridSpaces[13][11] = null;
-        }
-        else if((GridSpaces[13][11] instanceof Ghost)&&(GridSpaces[14][11] instanceof Ghost)){
-            Entities AnotherGhostTracker = GridSpaces[14][11];
-            GridSpaces[15][11] = AnotherGhostTracker;
-            GridSpaces[14][11] = null;
-            Entities TempGhostTracker = GridSpaces[13][11];
-            GridSpaces[14][11] = TempGhostTracker;
-            GridSpaces[13][11] = null;
-        }
-        else if(GridSpaces[13][11] instanceof Ghost){
-            Entities TempGhostTracker = GridSpaces[13][11];
-            GridSpaces[14][11] = TempGhostTracker;
-            GridSpaces[13][11] = null;
-        }
 
-    }
+
+
 
 
 // checks surrounding entities and puts them into an array
@@ -151,6 +139,11 @@ public Entities [] checkSurroundings(int x,int y,Entities [] ghost){
 
     return ghost;
 }
-
+    public int getNumRow() {
+        return numRow;
+    }
+    public int getNumCol(){
+        return numCol;
+    }
 
 }
