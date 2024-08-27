@@ -1,4 +1,4 @@
-package Pacman;
+package PacmanBackend;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -21,37 +21,45 @@ public class Default_MapDAO extends BaseDataAccessObject{
                 String Command = "SELECT TYPE FROM DEFAULT_MAP WHERE XVALUE ="+x+" AND YVALUE =" + y;
                 ResultSet result1 =  execute(Command);
                 String type = result1.getString("TYPE");
-                if(type == "WALL"){
+                if(type.equals("WALL")){
                     Wall wall = new Wall();
-                    myMap.SetEachPositionGrid(x,y,wall);
+                    myMap.SetEachPositionGrid(x-1,y-1,wall);
+
 
                 }
-                else if(type == "PELLET"){
+                else if(type.equals("PELLET")){
                     Pellet pellet = new Pellet();
-                    myMap.SetEachPositionGrid(x,y,pellet);
+                    myMap.SetEachPositionGrid(x-1,y-1,pellet);
 
                 }
-                else if(type == "PACMAN"){
+                else if(type.equals("FRUIT")){
+                    Fruit fruit = new Fruit();
+                    myMap.SetEachPositionGrid(x-1,y-1,fruit);
+
+                }
+                else if(type.equals("PACMAN")){
                     Pacman pacman = new Pacman();
-                    myMap.SetEachPositionGrid(x,y,pacman);
+                    myMap.SetEachPositionGrid(x-1,y-1,pacman);
 
                 }
-                else if(type == null){
+                else if((type == null)||(type.equals(""))){
 
-                    myMap.SetEachPositionGrid(x,y,null);
+                    myMap.SetEachPositionGrid(x-1,y-1,null);
 
                 }
-                else if(type == "POWER_PELLET"){
+                else if(type.equals("POWER_PELLET")){
                     PowerPellet Powerpellet = new PowerPellet();
-                    myMap.SetEachPositionGrid(x,y,Powerpellet);
+                    myMap.SetEachPositionGrid(x-1,y-1,Powerpellet);
 
                 }
-                else if(type == "GHOSTS"){
+                else if(type.equals("GHOSTS")){
                     Ghost ghost = new Ghost();
-                    myMap.SetEachPositionGrid(x,y,ghost);
+                    myMap.SetEachPositionGrid(x-1,y-1,ghost);
 
                 }
-                //TODO:Finish these if statements, pass in null for setpos when theres blank spaces
+                else{
+                    System.out.println("\""+type+"\" is not found");
+                }
             }
             catch(SQLException sql){
                System.out.println(sql.getMessage());

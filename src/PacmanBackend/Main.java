@@ -1,10 +1,9 @@
-package Pacman;
+package PacmanBackend;
 
 import java.sql.*;
-import java.lang.SecurityException;
 
 public class Main {
-
+/*
 
 
     public static void main(String[] args) {
@@ -33,6 +32,7 @@ public class Main {
             //Map gets put on screen
             //game starts
             //game plays
+
             //game ends
             //game tracks your highscore and stores it in sql
             HighScoreDAO highScoreDAO = new HighScoreDAO(conn);
@@ -56,5 +56,5 @@ public class Main {
             }
         }
     }
-
+*/
 }

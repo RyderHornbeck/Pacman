@@ -1,4 +1,4 @@
-package Pacman;
+package PacmanBackend;
 
 public abstract class Entities {
 

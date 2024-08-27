@@ -1,7 +1,10 @@
-package Pacman;
+package PacmanBackend;
 
+import java.io.OptionalDataException;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 enum RoundOutCome{
     DIE,WIN
@@ -15,7 +18,8 @@ enum keyboardDirections{
 }
 public class Game {
 
-     int PacLives;
+
+    int PacLives;
      int PowerPellets;
      int PacX;
      int PacY;
@@ -36,7 +40,8 @@ public class Game {
      HighScoreDAO highScoreDAO;
      final int [] DefaultGhostX;
      final int [] DefaultGhostY;
-     boolean [] GhostHasBeenSpawned;
+     int [] GhostJailSentence;
+     keyboardDirections PacInput;
     public Game(Connection conn){
         Default_MapDAO defaultMapDAO = new Default_MapDAO(conn);
         map = defaultMapDAO.getMap();
@@ -53,17 +58,34 @@ public class Game {
         currentGhostAlgorithim = GhostAlgorithim.RANDOM;
         FindPac();
         GhostX = new int [] {12,13,14,15};
-        GhostY = new int  [] {11,11,11,11};
-        GhostHasBeenSpawned = new boolean []{false,false,false,false};
+        GhostY = new int  [] {14,14,14,14};
+        GhostJailSentence= new int []{0,5,10,15};
         shortestDistances = new int[map.getNumRow()][map.getNumCol()];
         DefaultGhostX= new int [] {12,13,14,15};
-        DefaultGhostY= new int [] {11,11,11,11};
-        //TODO; make int arr
+        DefaultGhostY= new int [] {14,14,14,14};
+        PacInput = keyboardDirections.right;
+    }
+    public int   GetGhostx(int i){
+        return GhostX[i];
+    }
+    public int  GetGhosty(int i){
+        return GhostY[i];
+    }
+    public int[] GetGhostxLength(){
+        return GhostX;
+    }
+    public int getNumCol(){
+       return map.getNumCol();
+    }
+    public int getNumRow(){
+        return map.getNumRow();
+    }
+    public Entities GetEachPositionGrid(int xvalue, int yvalue){
+        return map.GetEachPositionGrid(xvalue,yvalue);
     }
     public void executeGame(int ID) {
 
-        //Map gets put on screen
-        printMap();
+
         //game starts
         boolean winStatus = false;
         while((PacLives>=1)&&!(winStatus)){
@@ -88,24 +110,39 @@ public class Game {
         highScoreDAO.setHighScore(ID,Score);
 
     }
-    public void printMap(){
 
-    }
     public RoundOutCome OneRound(){
+
         MoveMoversToStart();
         StepCounter = 0;
-        while(PelletTracker()||PowerPelletTracker()){
+        final RoundOutCome[] oneRound = {RoundOutCome.DIE};
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if(PelletTracker()||PowerPelletTracker()){
 
-            if(!OneStep()){
-                StepCounter=0;
-                return RoundOutCome.DIE;
-            }
-        }
-        return RoundOutCome.WIN;
+                    if(!OneStep()){
+                        StepCounter=0;
+                       oneRound[0] = RoundOutCome.DIE;
+                       timer.cancel();
+                       return;
+                    }
+
+                }
+               oneRound[0] =RoundOutCome.WIN;
+                timer.cancel();
+                return;
+            };
+
+        },0,500);
+      return oneRound[0];
     }
 
+
     public boolean OneStep() {
-        boolean PacDieOrWin = pacMove();
+
+        boolean PacDieOrWin = pacMove(PacInput);
         if(PowerPelletModeActive()){
             if(StepCounter%2==0){
                 ghostMove();
@@ -124,18 +161,18 @@ public class Game {
         ghostPlaceTracker =0;
     }
     public void PacMoveUp(){
-        pacMove(keyboardDirections.up);
+        PacInput =keyboardDirections.up;
     }
     public void PacMoveRight(){
 
-        pacMove(keyboardDirections.right);
+        PacInput =keyboardDirections.right;
     }
     public void PacMoveDown(){
-        pacMove(keyboardDirections.down);
+        PacInput =keyboardDirections.down;
     }
     public void PacMoveLeft(){
 
-        pacMove(keyboardDirections.left);
+        PacInput =keyboardDirections.left;
     }
     public boolean pacMove(keyboardDirections thisDirection){
         int x = PacX;
@@ -179,12 +216,11 @@ public class Game {
                     Score = Score + 200;
                     ghostPlaceTracker =0;
 
-                    //TODO: code in how to tell java to stop tracking a specific ghost
                    for(int i =0; i<GhostX.length;i++){
                        if((GhostX[i]==PacX)&&(GhostY[i]==PacY)){
                             GhostX[i]=DefaultGhostX[i];
                             GhostY[i]=DefaultGhostY[i];
-
+                            GhostJailSentence[i] = StepCounter+5;
                        }
                    }
 
@@ -263,11 +299,11 @@ public class Game {
         //call this like onestep, it works with one step each time
 
         for(int i=0;i<GhostX.length; i++){
-           if (!GhostHasBeenSpawned[i]){
+           if (GhostJailSentence[i]==StepCounter){
                try {
                     Entities check =map.GhostLeaveCage(i);
-                    if(check != null){
-                        GhostHasBeenSpawned[i]=true;
+                    if(check == null){
+                      GhostJailSentence[i] +=1;
                     }
                }
                catch(InvalidMoveException Ime){
@@ -497,8 +533,6 @@ public class Game {
         //THIS ALGORITHIM IS "DYNAMIC PROGRAMMING"
         UpdateNeighboringShortestDistances(PacX,PacY);
     }
-
-
 
 
 

@@ -1,4 +1,4 @@
-package Pacman;
+package PacmanBackend;
 
 public class InvalidMoveException extends Exception{
      public InvalidMoveException(String msg){

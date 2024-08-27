@@ -1,10 +1,15 @@
-package Pacman;
+package PacmanBackend;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
 public class UsernameDAO extends BaseDataAccessObject  {
+    public UsernameDAO(Connection conn){
+
+        super(conn);
+    }
 
     public String AskforUserName(){
         System.out.println("Type your username");

@@ -1,6 +1,6 @@
-package Pacman;
+package PacmanBackend;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 public class Map {
     private Entities [][] GridSpaces;
     Entities [] GhostsBeforeGridSpace;
@@ -30,10 +30,12 @@ public Map(int numRow, int numCol) {
     }
 
     public void SetEachPositionGrid(int xvalue, int yvalue,Entities EN){
-        GridSpaces[xvalue][yvalue] = EN;
+
+    GridSpaces[xvalue][yvalue] = EN;
     }
     public Entities GetEachPositionGrid(int xvalue,int yvalue){
-        return  GridSpaces[xvalue][yvalue];
+
+    return  GridSpaces[xvalue][yvalue];
     }
 
     public Entities move(int x, int y, int dx, int dy)throws InvalidMoveException {
@@ -140,10 +142,12 @@ public Entities [] checkSurroundings(int x,int y,Entities [] ghost){
     return ghost;
 }
     public int getNumRow() {
-        return numRow;
+
+    return numRow;
     }
     public int getNumCol(){
-        return numCol;
+
+    return numCol;
     }
 
 }

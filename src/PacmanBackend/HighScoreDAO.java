@@ -1,4 +1,4 @@
-package Pacman;
+package PacmanBackend;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
