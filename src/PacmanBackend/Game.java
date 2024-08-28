@@ -1,5 +1,7 @@
 package PacmanBackend;
 
+import PacmanFrontend.Updater;
+
 import java.io.OptionalDataException;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -42,7 +44,8 @@ public class Game {
      final int [] DefaultGhostY;
      int [] GhostJailSentence;
      keyboardDirections PacInput;
-    public Game(Connection conn){
+    Updater ScreenUpdater;
+    public Game(Connection conn, Updater screenUpdater){
         Default_MapDAO defaultMapDAO = new Default_MapDAO(conn);
         map = defaultMapDAO.getMap();
         highScoreDAO = new HighScoreDAO(conn);
@@ -64,6 +67,7 @@ public class Game {
         DefaultGhostX= new int [] {12,13,14,15};
         DefaultGhostY= new int [] {14,14,14,14};
         PacInput = keyboardDirections.right;
+        ScreenUpdater = screenUpdater;
     }
     public int   GetGhostx(int i){
         return GhostX[i];
@@ -81,8 +85,10 @@ public class Game {
         return map.getNumRow();
     }
     public Entities GetEachPositionGrid(int xvalue, int yvalue){
+
         return map.GetEachPositionGrid(xvalue,yvalue);
     }
+
     public void executeGame(int ID) {
 
 
@@ -110,10 +116,22 @@ public class Game {
         highScoreDAO.setHighScore(ID,Score);
 
     }
-
+    public int findPacman(){
+        int pac=0;
+        for (int i=0;i<getNumRow();i++){
+            for (int j=0;j<getNumCol();j++){
+                if (GetEachPositionGrid(i,j) instanceof Pacman){
+                    pac++;
+                }
+            }
+        }
+        System.out.println("num of pac ="+pac);
+        return pac;
+    }
     public RoundOutCome OneRound(){
-
+//Todo:fix game, to many pacman. one round goes through all 3 rounds when only supposed to go go through one
         MoveMoversToStart();
+        findPacman();
         StepCounter = 0;
         final RoundOutCome[] oneRound = {RoundOutCome.DIE};
         Timer timer = new Timer();
@@ -153,14 +171,17 @@ public class Game {
 
         }
         StepCounter++;
+        ScreenUpdater.update();
         return PacDieOrWin;
 
     }
 
     public void MoveMoversToStart(){
+
         ghostPlaceTracker =0;
     }
     public void PacMoveUp(){
+
         PacInput =keyboardDirections.up;
     }
     public void PacMoveRight(){
@@ -168,6 +189,7 @@ public class Game {
         PacInput =keyboardDirections.right;
     }
     public void PacMoveDown(){
+
         PacInput =keyboardDirections.down;
     }
     public void PacMoveLeft(){
@@ -368,6 +390,9 @@ public class Game {
 
         int Random  = 0;
         ArrayList <ArrayList <Integer>> WhichPathwaysAreNotWallsTracker = new ArrayList <ArrayList <Integer>>(GhostX.length);
+        for (int i = 0; i < GhostX.length; i++) {
+           WhichPathwaysAreNotWallsTracker.add(new ArrayList<Integer>(4));
+        }
         int [] RandomIndexes  =new int[GhostX.length];
         int [] RandomDirections = new int[GhostX.length];
         for(int i =0; i<GhostX.length;i++){

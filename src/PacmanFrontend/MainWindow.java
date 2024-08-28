@@ -25,7 +25,7 @@ public class MainWindow implements Updater{
     ImageIcon PacmanPic;
     ImageIcon [] GhostsPics;
     public static void main(String[] args) {
-      
+
         new MainWindow();
 
     }
@@ -91,7 +91,9 @@ public class MainWindow implements Updater{
             GhostsPics[3] = new ImageIcon(Ghost4newimg);
 
         int ID = Login(conn);
-        game = new Game(conn);
+
+
+        game = new Game(conn, this);
         gameGrid = new JPanel( new GridLayout(game.getNumCol(), game.getNumRow()));
         LabelObj = new JLabel[game.getNumRow()][game.getNumCol()];
         for(int j=0;j<game.getNumCol();j++){
@@ -128,15 +130,22 @@ public class MainWindow implements Updater{
                     public void keyPressed(KeyEvent e) {
                         if(e.getKeyCode() == KeyEvent.VK_UP){
                             game.PacMoveUp();
+                            System.out.println("UP");
                         }
                         else if(e.getKeyCode() == KeyEvent.VK_DOWN){
                             game.PacMoveDown();
+                            System.out.println("DOWN");
+
                         }
                         else if(e.getKeyCode() == KeyEvent.VK_RIGHT){
                             game.PacMoveRight();
+                            System.out.println("RIGHT");
+
                         }
                         else if(e.getKeyCode() == KeyEvent.VK_LEFT){
                             game.PacMoveLeft();
+                            System.out.println("LEFT");
+
                         }
                     }
                     @Override
@@ -152,6 +161,7 @@ public class MainWindow implements Updater{
 
                 });
                 frame.setVisible(true);
+                game.executeGame(ID);
 
             }
         });
