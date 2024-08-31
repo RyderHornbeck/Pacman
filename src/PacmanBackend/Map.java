@@ -3,26 +3,31 @@ import java.util.ArrayList;
 
 public class Map {
     private Entities [][] GridSpaces;
-    Entities [] GhostsBeforeGridSpace;
+
 
     Entities [] GhostNextObject;
     int numRow;
     int numCol;
-public Map(int numRow, int numCol) {
+    final int DefaultSpawnPointGhostX;
+    final int DefaultSpawnPointGhostY;
+
+    public Map(int numRow, int numCol) {
         this.GridSpaces = new Entities[numRow][numCol];
         this.numRow= numRow;
         this.numCol =numCol;
-        Entities [] GhostNextObject = new Entities[4];
-        Entities [] GhostsGridSpace = {GridSpaces[12][11],GridSpaces[13][11],GridSpaces[14][11],GridSpaces[15][11]};
+        GhostNextObject = new Entities[4];
+        DefaultSpawnPointGhostX=13;
+        DefaultSpawnPointGhostY =11;
 
     //GridSpaces is in Row Major Order
         //aka Gridspaces is an array of row arrays
 
 
 }
-
+///TODO:fix game
     public void setGridSpaces(Entities [][] GridSpaces) {
-        this.GridSpaces = GridSpaces;
+
+    this.GridSpaces = GridSpaces;
     }
 
     public Entities[][] getGridSpaces() {
@@ -42,7 +47,7 @@ public Map(int numRow, int numCol) {
         Entities currentobject = GridSpaces[x][y];
         Entities nextObject = GridSpaces[x+dx][y+dy];
         if (!(currentobject instanceof Movers)) {
-            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying move a nonMover");
+            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying move a nonMover normal");
 
         }
         else if( (dx != 0)&& (dy!=0)){
@@ -60,17 +65,14 @@ public Map(int numRow, int numCol) {
         }
         return nextObject;
     }
-    public void Ghostmove(int i,int x, int y, int dx, int dy)throws InvalidMoveException {
+    public Entities Ghostmove(int i,int x, int y, int dx, int dy)throws InvalidMoveException {
         Entities currentobject = GridSpaces[x][y];
 
-        if (!(currentobject instanceof Movers)) {
-            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying move a nonMover");
+        if (!(currentobject instanceof Ghost)) {
+            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying move a nonMover Ghost");
 
         }
-        else if( (dx != 0)&& (dy!=0)){
-            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying to move diagonally");
 
-        }
         else if(GridSpaces[x+dx][y+dy] instanceof Wall){
             ///if you try to move into a wall nothing happens
 
@@ -80,18 +82,21 @@ public Map(int numRow, int numCol) {
             GridSpaces[x][y] = GhostNextObject[i];
             GhostNextObject[i] = GridSpaces[x+dx][y+dy];
             GridSpaces[x + dx][y + dy] = currentobject;
+
         }
+        return currentobject;
 
     }
 
-    public Entities GhostLeaveCage(int ghostPlaceTracker)throws InvalidMoveException {
+    public Entities GhostLeaveCage(int ghostPlaceTracker,int  gX,int gY)throws InvalidMoveException {
 
-        Entities outsideCage = GridSpaces[13][11];
-        if(outsideCage instanceof Ghost){
+        Entities outsideCage = GridSpaces[DefaultSpawnPointGhostX][DefaultSpawnPointGhostY];
+        Entities currentObject = GridSpaces[gX][gY];
+        if (outsideCage instanceof Ghost) {
             return null;
         }
-
-        ArrayList <Entities>  ghostArr = new ArrayList<Entities>();
+        return Ghostmove(ghostPlaceTracker,gX,gY,DefaultSpawnPointGhostX-gX,DefaultSpawnPointGhostY-gY);
+       /* ArrayList <Entities>  ghostArr = new ArrayList<Entities>();
             if(GridSpaces[12+ghostPlaceTracker][14] instanceof Ghost){
                 ghostArr.add(GridSpaces[12+ghostPlaceTracker][14]);
 
@@ -101,7 +106,7 @@ public Map(int numRow, int numCol) {
         Entities currentobject = ghostArr.get(0);
 
         if (!(currentobject instanceof Movers)) {
-            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying move a nonMover");
+            throw new InvalidMoveException(" this is an InvalidMoveException, you are trying move a nonMover GhostLeave Cage");
 
         }
         else if(outsideCage instanceof Wall){
@@ -116,15 +121,17 @@ public Map(int numRow, int numCol) {
      }
 
     return GridSpaces[13][11];
+
+*/
     }
 
 
 
-
-
 // checks surrounding entities and puts them into an array
-public Entities [] checkSurroundings(int x,int y,Entities [] ghost){
+public Entities [] checkSurroundings(int x,int y){
+    Entities [] ghost = new Entities[4];
     if(GridSpaces[x][y] instanceof Wall){
+
         ///if you try to move into a wall nothing happens
         for(int i =0; i<4;i++){
             ghost[i] = GridSpaces[x][y];

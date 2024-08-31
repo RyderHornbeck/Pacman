@@ -5,8 +5,10 @@ import PacmanFrontend.Updater;
 import java.io.OptionalDataException;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 enum RoundOutCome{
     DIE,WIN
@@ -42,13 +44,18 @@ public class Game {
      HighScoreDAO highScoreDAO;
      final int [] DefaultGhostX;
      final int [] DefaultGhostY;
+     final int DefaultPacX=13;
+     final int DefaultPacY=23;
      int [] GhostJailSentence;
      keyboardDirections PacInput;
     Updater ScreenUpdater;
+    Pacman pacmanClass;
+    Random RandomNumGenerator;
     public Game(Connection conn, Updater screenUpdater){
         Default_MapDAO defaultMapDAO = new Default_MapDAO(conn);
         map = defaultMapDAO.getMap();
         highScoreDAO = new HighScoreDAO(conn);
+        pacmanClass = new Pacman();
         Pellets = 240;
         PowerPellets = 4;
         PacLives =3;
@@ -62,26 +69,32 @@ public class Game {
         FindPac();
         GhostX = new int [] {12,13,14,15};
         GhostY = new int  [] {14,14,14,14};
-        GhostJailSentence= new int []{0,5,10,15};
+        GhostJailSentence= new int []{5,10,15,20};
         shortestDistances = new int[map.getNumRow()][map.getNumCol()];
         DefaultGhostX= new int [] {12,13,14,15};
         DefaultGhostY= new int [] {14,14,14,14};
         PacInput = keyboardDirections.right;
         ScreenUpdater = screenUpdater;
+        RandomNumGenerator = new Random(4);
     }
     public int   GetGhostx(int i){
+
         return GhostX[i];
     }
     public int  GetGhosty(int i){
+
         return GhostY[i];
     }
     public int[] GetGhostxLength(){
+
         return GhostX;
     }
     public int getNumCol(){
-       return map.getNumCol();
+
+        return map.getNumCol();
     }
     public int getNumRow(){
+
         return map.getNumRow();
     }
     public Entities GetEachPositionGrid(int xvalue, int yvalue){
@@ -111,75 +124,99 @@ public class Game {
                 }
             //game plays
         }
+        System.out.println("YOU DIED GAME OVER");
         //game ends
         //game tracks your highscore and stores it in sql
         highScoreDAO.setHighScore(ID,Score);
 
     }
-    public int findPacman(){
+    public void findandsetPacman(){
         int pac=0;
+        //Todo:this method doesn't work
         for (int i=0;i<getNumRow();i++){
             for (int j=0;j<getNumCol();j++){
                 if (GetEachPositionGrid(i,j) instanceof Pacman){
+                    map.SetEachPositionGrid(i,j,null);
+                    PacX =DefaultPacX;
+                    PacY = DefaultPacY;
                     pac++;
                 }
             }
+
         }
-        System.out.println("num of pac ="+pac);
-        return pac;
+       System.out.println("num of pac = "+ pac);
     }
     public RoundOutCome OneRound(){
-//Todo:fix game, to many pacman. one round goes through all 3 rounds when only supposed to go go through one
-        MoveMoversToStart();
-        findPacman();
-        StepCounter = 0;
-        final RoundOutCome[] oneRound = {RoundOutCome.DIE};
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if(PelletTracker()||PowerPelletTracker()){
+    //Todo:fix game, to many pacman. one round goes through all 3 rounds when only supposed to go go through one
 
-                    if(!OneStep()){
-                        StepCounter=0;
-                       oneRound[0] = RoundOutCome.DIE;
-                       timer.cancel();
-                       return;
-                    }
+        StepCounter = 0;
+        MoveMoversToStart();
+        GhostAlgorithimChanger =RandomStepCount;
+        currentGhostAlgorithim =GhostAlgorithim.RANDOM;
+        GhostJailSentence= new int []{5,10,15,20};
+            while(PelletTracker() || PowerPelletTracker()) {
+                System.out.println("111");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if (!OneStep()) {
+                    System.out.println("hello");
+                    StepCounter = 0;
+                    return RoundOutCome.DIE;
+
 
                 }
-               oneRound[0] =RoundOutCome.WIN;
-                timer.cancel();
-                return;
-            };
 
-        },0,500);
-      return oneRound[0];
+            }
+        return RoundOutCome.WIN;
+
+
+
     }
 
 
     public boolean OneStep() {
+        System.out.println("Red Ghost:"+GhostX[0]+", "+GhostY[0]);
+        if ((GhostX[0]==12)&&(GhostY[0]==11)){
+            System.out.println("Red Ghost is at 12,11");
 
+        }
         boolean PacDieOrWin = pacMove(PacInput);
+        boolean GhostDieOrWin = true;
         if(PowerPelletModeActive()){
             if(StepCounter%2==0){
-                ghostMove();
+              GhostDieOrWin =  ghostMove();
             }
         }
         else{
-            ghostMove();
+            GhostDieOrWin = ghostMove();
 
         }
         StepCounter++;
         ScreenUpdater.update();
-        return PacDieOrWin;
+
+        return PacDieOrWin && GhostDieOrWin;
 
     }
 
     public void MoveMoversToStart(){
+        for(int i =0; i<GhostX.length;i++){
 
-        ghostPlaceTracker =0;
+                map.SetEachPositionGrid(GhostX[i],GhostY[i],map.GhostNextObject[i]);
+                map.SetEachPositionGrid(DefaultGhostX[i],DefaultGhostY[i], new Ghost());
+                map.GhostNextObject[i]= null;
+                GhostX[i]=DefaultGhostX[i];
+                GhostY[i]=DefaultGhostY[i];
+
+        }
+        map.SetEachPositionGrid(PacX,PacY,null);
+        map.SetEachPositionGrid(DefaultPacX,DefaultPacY,new Pacman());
+        PacX=DefaultPacX;
+        PacY=DefaultPacY;
     }
+    //TODO:WHen Pacman Eats a ghost make that ghost go to cage
     public void PacMoveUp(){
 
         PacInput =keyboardDirections.up;
@@ -219,13 +256,14 @@ public class Game {
                 PacX = PacX+dx;
                 PacY =PacY+dy;
             }
-             if(Nextobj instanceof Pellet){
-                Score= Score+10;
-                Pellets--;
-            }
-            else if(Nextobj instanceof PowerPellet){
+
+            if(Nextobj instanceof PowerPellet){
                PowerPellets--;
                PowerPelletEaten();
+            }
+            else if(Nextobj instanceof Pellet){
+                Score= Score+10;
+                Pellets--;
             }
             else if(Nextobj == null){
 
@@ -242,7 +280,12 @@ public class Game {
                        if((GhostX[i]==PacX)&&(GhostY[i]==PacY)){
                             GhostX[i]=DefaultGhostX[i];
                             GhostY[i]=DefaultGhostY[i];
-                            GhostJailSentence[i] = StepCounter+5;
+                            GhostJailSentence[i] = StepCounter+10;
+                            if((map.GhostNextObject[i]instanceof PowerPellet)) {
+                                PowerPellets--;
+                                PowerPelletEaten();
+                            }
+                           map.GhostNextObject[i] = null;
                        }
                    }
 
@@ -264,8 +307,9 @@ public class Game {
     }
 
 
-    public void ghostMove(){
-            GhostAlgorithim();
+    public boolean ghostMove(){
+            return GhostAlgorithim();
+
     }
     public boolean PowerPelletModeActive(){
 
@@ -312,20 +356,25 @@ public class Game {
                 if (map.GetEachPositionGrid(x,y) instanceof Pacman){
                     PacX=x;
                     PacY =y;
-                    return;
+                    System.out.println("Pacman is at"+x+", "+y);
                 }
             }
         }
     }
-    public void GhostAlgorithim() {
+    public boolean GhostAlgorithim() {
         //call this like onestep, it works with one step each time
 
         for(int i=0;i<GhostX.length; i++){
            if (GhostJailSentence[i]==StepCounter){
                try {
-                    Entities check =map.GhostLeaveCage(i);
+                    Entities check =map.GhostLeaveCage(i,GhostX[i],GhostY[i]);
+
                     if(check == null){
                       GhostJailSentence[i] +=1;
+                    }
+                    else{
+                        GhostX[i]= map.DefaultSpawnPointGhostX;
+                        GhostY[i]= map.DefaultSpawnPointGhostY;
                     }
                }
                catch(InvalidMoveException Ime){
@@ -350,11 +399,11 @@ public class Game {
             }
         }
 
-
+        boolean  Temp = true;
 
        if(currentGhostAlgorithim == GhostAlgorithim.RANDOM){
             try {
-                RandomGhostMove();
+               Temp = RandomGhostMove();
             }
             catch(InvalidMoveException IME){
                 System.out.println(IME.getMessage());
@@ -362,14 +411,14 @@ public class Game {
         }
         else if(currentGhostAlgorithim == GhostAlgorithim.CHASE){
             try{
-                chaseGhostMove();
+               Temp = chaseGhostMove();
             } catch (InvalidMoveException e) {
                 System.out.println(e.getMessage());
             }
         }
         else if(currentGhostAlgorithim == GhostAlgorithim.FRIGHTENED){
             try{
-                FrightenedGhostMove();
+                Temp = FrightenedGhostMove();
             } catch (InvalidMoveException e) {
                 System.out.println(e.getMessage());
             }
@@ -377,43 +426,23 @@ public class Game {
 
 
 
-
+      return Temp;
     }
-    public void RandomGhostMove()throws InvalidMoveException {
-        Entities [][] GhostSurroundings = new Entities[GhostX.length][4];
-        for(int i =0; i<GhostX.length;i++) {
-            // The surroundings go in order of North east south west
-            GhostSurroundings[i] = map.checkSurroundings(GhostX[i], GhostY[i], GhostSurroundings[i]);
-        }
-
-        // Ghost1After and Ghost1 are arrays that check the surrounding Entities
-
-        int Random  = 0;
-        ArrayList <ArrayList <Integer>> WhichPathwaysAreNotWallsTracker = new ArrayList <ArrayList <Integer>>(GhostX.length);
-        for (int i = 0; i < GhostX.length; i++) {
-           WhichPathwaysAreNotWallsTracker.add(new ArrayList<Integer>(4));
-        }
-        int [] RandomIndexes  =new int[GhostX.length];
+    public boolean RandomGhostMove()throws InvalidMoveException {
+        boolean Temp = true;
         int [] RandomDirections = new int[GhostX.length];
-        for(int i =0; i<GhostX.length;i++){
-            WhichPathwaysAreNotWallsTracker.set(i, new ArrayList<Integer>());
-            for(int j =0; j<4;j++){
-            if(!(GhostSurroundings[i][j] instanceof Wall)&&!(GhostSurroundings[i][j] instanceof Ghost)) {
-
-                WhichPathwaysAreNotWallsTracker.get(i).add(j);
-               }
+        for(int i =0; i<GhostX.length;i++) {
+            ArrayList<Integer> ValidDirections = new ArrayList<Integer>(4);
+            Entities[] GhostSurroundings = map.checkSurroundings(GhostX[i], GhostY[i]);
+            for (int j = 0; j < 4; j++) {
+                if (!((GhostSurroundings[j] instanceof Wall) || (GhostSurroundings[j] instanceof Ghost))) {
+                    ValidDirections.add(j);
+                }
             }
-            Random =(int)(Math.random()*WhichPathwaysAreNotWallsTracker.get(i).size());
-            RandomIndexes[i] = Random;
-            RandomDirections[i] =WhichPathwaysAreNotWallsTracker.get(i).get(RandomIndexes[i]);
-        }
-        //this whole random block has an arraylist of arraylists and this holds the 4 ghosts valid pathways.
-        //and RandomIndexes holds 4 random indexes of the arraylists inside the bigger arraylist.
-        // RandomDirection holds the 4 new directiions of the 4 ghosts by getting the actual pathway we want from the arraylists using our random indexes
+            int Random = (int) (RandomNumGenerator.nextDouble() * ValidDirections.size());
+            RandomDirections[i] = ValidDirections.get(Random);
 
-
-
-        for(int i=0;i<GhostX.length;i++){
+       //for(int i=0;i<GhostX.length;i++){
             int dx =0;
             int dy =0;
             if(RandomDirections[i]==0){
@@ -432,81 +461,126 @@ public class Game {
                 dx=-1;
 
             }
-            if((GhostX[i]!=DefaultGhostX[i])&&(GhostY[i]!=DefaultGhostY[i])) {
+            if((GhostX[i]!=DefaultGhostX[i])||(GhostY[i]!=DefaultGhostY[i])) {
+                if(map.GetEachPositionGrid(GhostX[i]+dx,GhostY[i]+dy)instanceof Pacman){
+                    Temp = false;
+                }
                 map.Ghostmove(i, GhostX[i], GhostY[i], dx, dy);
                 GhostX[i] = GhostX[i] + dx;
                 GhostY[i] = GhostY[i] + dy;
 
             }
+            if(!Temp){
+                return Temp;
+
+            }
         }
 
-
+    return Temp;
     }
-    public void chaseGhostMove() throws InvalidMoveException {
+    public boolean chaseGhostMove() throws InvalidMoveException {
+        boolean Temp = true;
         int[] dx = {0, 1, 0, -1};
         int[] dy = {1, 0, -1, 0};
         for (int j = 0; j < GhostX.length; j++) {
-            int TempShortest = 2147483647;
-            int TempShortestDirection = -1;
-            for (int i = 0; i < dx.length; i++) {
-                int neighborX = GhostX[j] + dx[i];
-                int neighborY = GhostY[j] + dy[i];
-                if ((neighborX < map.getNumRow() && neighborX >= 0) && (neighborY < map.getNumCol() && neighborY >= 0)) {
-                    Entities neighbor = map.GetEachPositionGrid(neighborX, neighborY);
+            if(!((GhostX[j]== DefaultGhostX[j])&&(GhostY[j]== DefaultGhostY[j]))) {
+                int TempShortest = 2147483647;
+                int TempShortestDirection = -1;
+                for (int i = 0; i < dx.length; i++) {
+                    System.out.println("Checking Ghost: " + j + " neighbor: " + i);
 
-                    if (!(neighbor instanceof Wall)) {
-                        int DistToPacMan = shortestDistances[neighborX][neighborY];
-                        if (DistToPacMan < TempShortest) {
-                            TempShortest = DistToPacMan;
-                            TempShortestDirection = i;
+                    int neighborX = GhostX[j] + dx[i];
+                    int neighborY = GhostY[j] + dy[i];
+
+                    if ((neighborX < map.getNumRow() && neighborX >= 0) && (neighborY < map.getNumCol() && neighborY >= 0)) {
+                        Entities neighbor = map.GetEachPositionGrid(neighborX, neighborY);
+
+                        if (!((neighbor instanceof Wall) || (neighbor instanceof Ghost))) {
+                            int DistToPacMan = shortestDistances[neighborX][neighborY];
+                            System.out.println("The Dist to pacman is " + DistToPacMan);
+
+                            if (DistToPacMan < TempShortest) {
+                                TempShortest = DistToPacMan;
+                                TempShortestDirection = i;
+                            }
+                        } else {
+                            System.out.println("This neighbor position is a wall or ghost");
+
                         }
-                    }
 
+                    } else {
+                        System.out.println("This neighbor position is outside grid");
+                    }
+                }
+                if (TempShortestDirection == -1) {
+                    throw new InvalidMoveException("No possible moves found Chase " + j);
+                }
+                if ((GhostX[j] != DefaultGhostX[j]) || (GhostY[j] != DefaultGhostY[j])) {
+                    if(map.GetEachPositionGrid(GhostX[j]+dx[TempShortestDirection],GhostY[j]+dy[TempShortestDirection])instanceof Pacman){
+                        Temp = false;
+                    }
+                    map.Ghostmove(j, GhostX[j], GhostY[j], dx[TempShortestDirection], dy[TempShortestDirection]);
+                    GhostX[j] = GhostX[j] + dx[TempShortestDirection];
+                    GhostY[j] = GhostY[j] + dy[TempShortestDirection];
                 }
             }
-            if (TempShortestDirection == -1) {
-                throw new InvalidMoveException("No possible moves found");
-            }
-            if ((GhostX[j] != DefaultGhostX[j]) && (GhostY[j] != DefaultGhostY[j])) {
+            else{
+                System.out.print("Ghost:"+j+" is still in the box");
 
-                map.Ghostmove(j, GhostX[j], GhostY[j], dx[TempShortestDirection], dy[TempShortestDirection]);
-                GhostX[j] = GhostX[j] + dx[TempShortestDirection];
-                GhostY[j] = GhostY[j] + dy[TempShortestDirection];
+            }
+            if(!Temp){
+                return Temp;
+
             }
         }
+        return Temp;
     }
-    public void FrightenedGhostMove() throws InvalidMoveException {
+    public boolean FrightenedGhostMove() throws InvalidMoveException {
+        boolean Temp = true;
+
         int[] dx = {0, 1, 0, -1};
         int[] dy = {1, 0, -1, 0};
         for (int j = 0; j < GhostX.length; j++) {
-            int TempLongest = -1;
-            int TempLongestDirection = -1;
-            for (int i = 0; i < dx.length; i++) {
-                int neighborX = GhostX[j] + dx[i];
-                int neighborY = GhostY[j] + dy[i];
-                if ((neighborX < map.getNumRow() && neighborX >= 0) && (neighborY < map.getNumCol() && neighborY >= 0)) {
-                    Entities neighbor = map.GetEachPositionGrid(neighborX, neighborY);
+            if (!((GhostX[j] == DefaultGhostX[j]) && (GhostY[j] == DefaultGhostY[j]))) {
+                int TempLongest = -1;
+                int TempLongestDirection = -1;
+                for (int i = 0; i < dx.length; i++) {
+                    int neighborX = GhostX[j] + dx[i];
+                    int neighborY = GhostY[j] + dy[i];
+                    if ((neighborX < map.getNumRow() && neighborX >= 0) && (neighborY < map.getNumCol() && neighborY >= 0)) {
+                        Entities neighbor = map.GetEachPositionGrid(neighborX, neighborY);
 
-                    if (!(neighbor instanceof Wall)) {
-                        int DistToPacMan = shortestDistances[neighborX][neighborY];
-                        if (DistToPacMan > TempLongest) {
-                            TempLongest = DistToPacMan;
-                            TempLongestDirection = i;
+                        if (!((neighbor instanceof Wall) || (neighbor instanceof Ghost))) {
+                            int DistToPacMan = shortestDistances[neighborX][neighborY];
+                            if (DistToPacMan > TempLongest) {
+                                TempLongest = DistToPacMan;
+                                TempLongestDirection = i;
+                            }
                         }
                     }
+                }
+                if (TempLongestDirection == -1) {
+                    throw new InvalidMoveException("No possible moves found Frightened " + j);
+                }
+                if ((GhostX[j] != DefaultGhostX[j]) || (GhostY[j] != DefaultGhostY[j])) {
+                    if(map.GetEachPositionGrid(GhostX[j]+dx[TempLongestDirection],GhostY[j]+dy[TempLongestDirection])instanceof Pacman){
+                        Temp = false;
+                    }
+                    map.Ghostmove(j, GhostX[j], GhostY[j], dx[TempLongestDirection], dy[TempLongestDirection]);
 
+                    GhostX[j] = GhostX[j] + dx[TempLongestDirection];
+                    GhostY[j] = GhostY[j] + dy[TempLongestDirection];
                 }
             }
-            if (TempLongestDirection == -1) {
-                throw new InvalidMoveException("No possible moves found");
+            else{
+                System.out.print("Ghost:"+j+" is still in the box Frightened");
             }
-            if((GhostX[j]!=DefaultGhostX[j])&&(GhostY[j]!=DefaultGhostY[j])) {
+            if(!Temp){
+                return Temp;
 
-                map.Ghostmove(j, GhostX[j], GhostY[j], dx[TempLongestDirection], dy[TempLongestDirection]);
-                GhostX[j] = GhostX[j] + dx[TempLongestDirection];
-                GhostY[j] = GhostY[j] + dy[TempLongestDirection];
             }
         }
+        return Temp;
     }
     private void UpdateNeighboringShortestDistances(int x, int y) {
         int myValue = shortestDistances[x][y];
