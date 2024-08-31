@@ -32,8 +32,8 @@ public class Game {
      int PowerPelletModeCount;
      int Score;
      int GhostAlgorithimChanger;
-     final int RandomStepCount=12;
-     final int ChaseStepCount=20;
+     final int RandomStepCount=14;
+     final int ChaseStepCount=25;
      int ghostPlaceTracker;
      int [] GhostX;
      int[] GhostY;
@@ -85,9 +85,9 @@ public class Game {
 
         return GhostY[i];
     }
-    public int[] GetGhostxLength(){
+    public int GetGhostxLength(){
 
-        return GhostX;
+        return GhostX.length;
     }
     public int getNumCol(){
 
@@ -148,7 +148,7 @@ public class Game {
     }
     public RoundOutCome OneRound(){
     //Todo:fix game, to many pacman. one round goes through all 3 rounds when only supposed to go go through one
-
+        PowerPelletModeCount =0;
         StepCounter = 0;
         MoveMoversToStart();
         GhostAlgorithimChanger =RandomStepCount;
@@ -157,7 +157,7 @@ public class Game {
             while(PelletTracker() || PowerPelletTracker()) {
                 System.out.println("111");
                 try {
-                    TimeUnit.MILLISECONDS.sleep(500);
+                    TimeUnit.MILLISECONDS.sleep(300);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -280,6 +280,7 @@ public class Game {
                        if((GhostX[i]==PacX)&&(GhostY[i]==PacY)){
                             GhostX[i]=DefaultGhostX[i];
                             GhostY[i]=DefaultGhostY[i];
+                            map.SetEachPositionGrid(DefaultGhostX[i],DefaultGhostY[i],new Ghost());
                             GhostJailSentence[i] = StepCounter+10;
                             if((map.GhostNextObject[i]instanceof PowerPellet)) {
                                 PowerPellets--;
@@ -311,12 +312,22 @@ public class Game {
             return GhostAlgorithim();
 
     }
+    public boolean ifGhostShouldturnBlue(){
+        if(currentGhostAlgorithim == GhostAlgorithim.FRIGHTENED){
+            return true;
+        }
+        return false;
+    }
     public boolean PowerPelletModeActive(){
 
         if(StepCounter<=PowerPelletModeCount){
+
             return true;
+
         }
         else{
+
+
             if(currentGhostAlgorithim== GhostAlgorithim.FRIGHTENED){
                 currentGhostAlgorithim = GhostAlgorithim.CHASE;
                 GhostAlgorithimChanger = StepCounter + ChaseStepCount;
@@ -363,9 +374,11 @@ public class Game {
     }
     public boolean GhostAlgorithim() {
         //call this like onestep, it works with one step each time
-
+       //TODo if you eat a powerpoellet and then after you die the ghost dont come out correctly just index 1 and 3 come out
         for(int i=0;i<GhostX.length; i++){
+            System.out.println("Ghost:" + i+" is going through the for loooooop");
            if (GhostJailSentence[i]==StepCounter){
+               System.out.println("Ghost:"+ i+" is leaving cage");
                try {
                     Entities check =map.GhostLeaveCage(i,GhostX[i],GhostY[i]);
 
@@ -562,6 +575,11 @@ public class Game {
                 if (TempLongestDirection == -1) {
                     throw new InvalidMoveException("No possible moves found Frightened " + j);
                 }
+
+                  //  map.SetEachPositionGrid(GhostX[i],GhostY[i],new BlueGhost());
+
+
+
                 if ((GhostX[j] != DefaultGhostX[j]) || (GhostY[j] != DefaultGhostY[j])) {
                     if(map.GetEachPositionGrid(GhostX[j]+dx[TempLongestDirection],GhostY[j]+dy[TempLongestDirection])instanceof Pacman){
                         Temp = false;

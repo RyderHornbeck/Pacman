@@ -21,8 +21,16 @@ public class MainWindow implements Updater{
     ImageIcon CherryPic;
     ImageIcon BlackSquarePic;
     ImageIcon PowerPelletPic;
+    ImageIcon BlueGhost1;
+    ImageIcon [] GhostDecider;
     ImageIcon PelletPic;
     ImageIcon PacmanPic;
+    ImageIcon RightPacmanPic;
+    ImageIcon LeftPacmanPic;
+    ImageIcon DownPacmanPic;
+    ImageIcon PacmanUpPic;
+    ImageIcon PacmanPicDecider;
+
     ImageIcon [] GhostsPics;
     public static void main(String[] args) {
 
@@ -42,16 +50,38 @@ public class MainWindow implements Updater{
             System.out.println(e.getMessage());
             return;
         }
-
+        GhostDecider = new ImageIcon[4];
         PacmanPic = new ImageIcon("C:\\Users\\ryder\\Downloads\\PACMANwithdarkoutline.png");
         Image image = PacmanPic.getImage();
         Image newimg = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         PacmanPic = new ImageIcon(newimg);
 
+        PacmanPicDecider =PacmanPic;
+
+        PacmanUpPic = new ImageIcon("C:\\Users\\ryder\\Downloads\\PACMANUP.png");
+        Image Upimage = PacmanUpPic.getImage();
+        Image Upnewimg = Upimage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        PacmanUpPic = new ImageIcon(Upnewimg);
+
+        DownPacmanPic = new ImageIcon("C:\\Users\\ryder\\Downloads\\PACMANDown - Copy.png");
+        Image Downimage = DownPacmanPic.getImage();
+        Image Downnewimg = Downimage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        DownPacmanPic = new ImageIcon(Downnewimg);
+
+        LeftPacmanPic = new ImageIcon("C:\\Users\\ryder\\Downloads\\PACMANLeft.png");
+        Image Leftimage = LeftPacmanPic.getImage();
+        Image Leftnewimg = Leftimage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        LeftPacmanPic = new ImageIcon(Leftnewimg);
+
         CherryPic = new ImageIcon("C:\\Users\\ryder\\Downloads\\Cherry.png");
         Image Cherryimage = CherryPic.getImage();
         Image Cherrynewimg = Cherryimage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         CherryPic = new ImageIcon(Cherrynewimg);
+
+        BlueGhost1 = new ImageIcon("C:\\Users\\ryder\\Downloads\\RealBlueGhost.png");
+        Image Blueimage = BlueGhost1.getImage();
+        Image Bluenewimg = Blueimage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        BlueGhost1 = new ImageIcon(Bluenewimg);
 
         BlackSquarePic = new ImageIcon("C:\\Users\\ryder\\IdeaProjects\\Pacman\\src\\PacmanFrontend\\BlackSquare.png");
         Image Wallimage = BlackSquarePic.getImage();
@@ -126,17 +156,24 @@ public class MainWindow implements Updater{
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_UP) {
                     game.PacMoveDown();
+                    PacmanPicDecider = PacmanUpPic;
+
                     System.out.println("UP");
                 } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
                     game.PacMoveUp();
+                    PacmanPicDecider = DownPacmanPic;
                     System.out.println("DOWN");
 
                 } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
                     game.PacMoveRight();
+                    PacmanPicDecider = PacmanPic;
+
                     System.out.println("RIGHT");
 
                 } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
                     game.PacMoveLeft();
+                    PacmanPicDecider = LeftPacmanPic;
+
                     System.out.println("LEFT");
 
                 }
@@ -190,7 +227,7 @@ public class MainWindow implements Updater{
                      LabelObj[horz][vert].setIcon(BlackSquarePic);
                  }
                  if(game.GetEachPositionGrid(horz,vert) instanceof Pacman) {
-                     LabelObj[horz][vert].setIcon(PacmanPic);
+                     LabelObj[horz][vert].setIcon(PacmanPicDecider);
                  }
 
                  if(game.GetEachPositionGrid(horz,vert) instanceof PowerPellet) {
@@ -201,6 +238,8 @@ public class MainWindow implements Updater{
                      LabelObj[horz][vert].setIcon(PelletPic);
 
                  }
+
+
 
                  if(game.GetEachPositionGrid(horz,vert) instanceof Fruit) {
                      LabelObj[horz][vert].setIcon(CherryPic);
@@ -213,9 +252,15 @@ public class MainWindow implements Updater{
                  if(game.GetEachPositionGrid(horz,vert) instanceof Ghost) {
                      boolean GhostFound = false;
                      for (int i = 0; i < GhostsPics.length; i++) {
+                         if(game.ifGhostShouldturnBlue()) {
+                             GhostDecider[i]=BlueGhost1;
 
-                         if((horz==game.GetGhostx(i)) && (vert ==game.GetGhosty(i))) {
-                             LabelObj[horz][vert].setIcon(GhostsPics[i]);
+                         }
+                         else if(!(game.ifGhostShouldturnBlue())){
+                             GhostDecider[i]=GhostsPics[i];
+                         }
+                         if ((horz == game.GetGhostx(i)) && (vert == game.GetGhosty(i))) {
+                             LabelObj[horz][vert].setIcon(GhostDecider[i]);
                              GhostFound = true;
                          }
                      }
