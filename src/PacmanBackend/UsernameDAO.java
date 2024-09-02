@@ -44,6 +44,7 @@ public class UsernameDAO extends BaseDataAccessObject  {
 
       }
     catch(SQLException SQl){
+
         System.out.println(SQl.getMessage());
     }
 

@@ -158,23 +158,23 @@ public class MainWindow implements Updater{
                     game.PacMoveDown();
                     PacmanPicDecider = PacmanUpPic;
 
-                    System.out.println("UP");
+                  //  System.out.println("UP");
                 } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
                     game.PacMoveUp();
                     PacmanPicDecider = DownPacmanPic;
-                    System.out.println("DOWN");
+                   // System.out.println("DOWN");
 
                 } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
                     game.PacMoveRight();
                     PacmanPicDecider = PacmanPic;
 
-                    System.out.println("RIGHT");
+                   // System.out.println("RIGHT");
 
                 } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
                     game.PacMoveLeft();
                     PacmanPicDecider = LeftPacmanPic;
 
-                    System.out.println("LEFT");
+                  //  System.out.println("LEFT");
 
                 }
             }

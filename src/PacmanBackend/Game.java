@@ -46,11 +46,11 @@ public class Game {
      final int [] DefaultGhostY;
      final int DefaultPacX=13;
      final int DefaultPacY=23;
+     int GhostEatenScoreTracker;
      int [] GhostJailSentence;
      keyboardDirections PacInput;
     Updater ScreenUpdater;
     Pacman pacmanClass;
-    Random RandomNumGenerator;
     public Game(Connection conn, Updater screenUpdater){
         Default_MapDAO defaultMapDAO = new Default_MapDAO(conn);
         map = defaultMapDAO.getMap();
@@ -75,7 +75,8 @@ public class Game {
         DefaultGhostY= new int [] {14,14,14,14};
         PacInput = keyboardDirections.right;
         ScreenUpdater = screenUpdater;
-        RandomNumGenerator = new Random(4);
+
+        GhostEatenScoreTracker =0;
     }
     public int   GetGhostx(int i){
 
@@ -125,9 +126,15 @@ public class Game {
             //game plays
         }
         System.out.println("YOU DIED GAME OVER");
+        System.out.println(" ");
         //game ends
         //game tracks your highscore and stores it in sql
-        highScoreDAO.setHighScore(ID,Score);
+        System.out.println("YOUR OLD HIGHSCORE: "+highScoreDAO.getHighScore(ID));
+        if(highScoreDAO.getHighScore(ID)<Score) {
+            System.out.println(" ");
+            System.out.println("YOUR NEW HIGHSCORE: "+Score);
+            highScoreDAO.setHighScore(ID, Score);
+        }
 
     }
     public void findandsetPacman(){
@@ -144,7 +151,7 @@ public class Game {
             }
 
         }
-       System.out.println("num of pac = "+ pac);
+      // System.out.println("num of pac = "+ pac);
     }
     public RoundOutCome OneRound(){
     //Todo:fix game, to many pacman. one round goes through all 3 rounds when only supposed to go go through one
@@ -155,14 +162,14 @@ public class Game {
         currentGhostAlgorithim =GhostAlgorithim.RANDOM;
         GhostJailSentence= new int []{5,10,15,20};
             while(PelletTracker() || PowerPelletTracker()) {
-                System.out.println("111");
+               // System.out.println("111");
                 try {
-                    TimeUnit.MILLISECONDS.sleep(300);
+                    TimeUnit.MILLISECONDS.sleep(275);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
                 if (!OneStep()) {
-                    System.out.println("hello");
+               //     System.out.println("hello");
                     StepCounter = 0;
                     return RoundOutCome.DIE;
 
@@ -178,9 +185,10 @@ public class Game {
 
 
     public boolean OneStep() {
-        System.out.println("Red Ghost:"+GhostX[0]+", "+GhostY[0]);
+        int temp = Score;
+    //    System.out.println("Red Ghost:"+GhostX[0]+", "+GhostY[0]);
         if ((GhostX[0]==12)&&(GhostY[0]==11)){
-            System.out.println("Red Ghost is at 12,11");
+     //       System.out.println("Red Ghost is at 12,11");
 
         }
         boolean PacDieOrWin = pacMove(PacInput);
@@ -195,6 +203,9 @@ public class Game {
 
         }
         StepCounter++;
+        if(Score>temp) {
+            System.out.println("SCORE: "+Score);
+        }
         ScreenUpdater.update();
 
         return PacDieOrWin && GhostDieOrWin;
@@ -273,9 +284,25 @@ public class Game {
             }
             else if(Nextobj instanceof Ghost) {
                 if (PowerPelletModeActive()) {
-                    Score = Score + 200;
-                    ghostPlaceTracker =0;
-
+                    if(GhostEatenScoreTracker==0) {
+                        Score = Score + 200;
+                        ghostPlaceTracker = 0;
+                        GhostEatenScoreTracker++;
+                    }
+                    else if(GhostEatenScoreTracker==1) {
+                        Score = Score + 400;
+                        ghostPlaceTracker = 0;
+                        GhostEatenScoreTracker++;
+                    }
+                    else if(GhostEatenScoreTracker==2) {
+                        Score = Score + 800;
+                        ghostPlaceTracker = 0;
+                        GhostEatenScoreTracker++;
+                    }
+                    else if(GhostEatenScoreTracker==3) {
+                        Score = Score + 1600;
+                        ghostPlaceTracker = 0;
+                    }
                    for(int i =0; i<GhostX.length;i++){
                        if((GhostX[i]==PacX)&&(GhostY[i]==PacY)){
                             GhostX[i]=DefaultGhostX[i];
@@ -321,13 +348,10 @@ public class Game {
     public boolean PowerPelletModeActive(){
 
         if(StepCounter<=PowerPelletModeCount){
-
             return true;
-
         }
         else{
-
-
+            GhostEatenScoreTracker =0;
             if(currentGhostAlgorithim== GhostAlgorithim.FRIGHTENED){
                 currentGhostAlgorithim = GhostAlgorithim.CHASE;
                 GhostAlgorithimChanger = StepCounter + ChaseStepCount;
@@ -367,7 +391,7 @@ public class Game {
                 if (map.GetEachPositionGrid(x,y) instanceof Pacman){
                     PacX=x;
                     PacY =y;
-                    System.out.println("Pacman is at"+x+", "+y);
+               ///     System.out.println("Pacman is at"+x+", "+y);
                 }
             }
         }
@@ -376,9 +400,9 @@ public class Game {
         //call this like onestep, it works with one step each time
        //TODo if you eat a powerpoellet and then after you die the ghost dont come out correctly just index 1 and 3 come out
         for(int i=0;i<GhostX.length; i++){
-            System.out.println("Ghost:" + i+" is going through the for loooooop");
+           // System.out.println("Ghost:" + i+" is going through the for loooooop");
            if (GhostJailSentence[i]==StepCounter){
-               System.out.println("Ghost:"+ i+" is leaving cage");
+             //  System.out.println("Ghost:"+ i+" is leaving cage");
                try {
                     Entities check =map.GhostLeaveCage(i,GhostX[i],GhostY[i]);
 
@@ -452,7 +476,7 @@ public class Game {
                     ValidDirections.add(j);
                 }
             }
-            int Random = (int) (RandomNumGenerator.nextDouble() * ValidDirections.size());
+            int Random = (int) (Math.random() * ValidDirections.size());
             RandomDirections[i] = ValidDirections.get(Random);
 
        //for(int i=0;i<GhostX.length;i++){
@@ -500,7 +524,7 @@ public class Game {
                 int TempShortest = 2147483647;
                 int TempShortestDirection = -1;
                 for (int i = 0; i < dx.length; i++) {
-                    System.out.println("Checking Ghost: " + j + " neighbor: " + i);
+                    //   System.out.println("Checking Ghost: " + j + " neighbor: " + i);
 
                     int neighborX = GhostX[j] + dx[i];
                     int neighborY = GhostY[j] + dy[i];
@@ -510,23 +534,23 @@ public class Game {
 
                         if (!((neighbor instanceof Wall) || (neighbor instanceof Ghost))) {
                             int DistToPacMan = shortestDistances[neighborX][neighborY];
-                            System.out.println("The Dist to pacman is " + DistToPacMan);
+                          //  System.out.println("The Dist to pacman is " + DistToPacMan);
 
                             if (DistToPacMan < TempShortest) {
                                 TempShortest = DistToPacMan;
                                 TempShortestDirection = i;
                             }
                         } else {
-                            System.out.println("This neighbor position is a wall or ghost");
+                           // System.out.println("This neighbor position is a wall or ghost");
 
                         }
 
                     } else {
-                        System.out.println("This neighbor position is outside grid");
+                      //  System.out.println("This neighbor position is outside grid");
                     }
                 }
                 if (TempShortestDirection == -1) {
-                    throw new InvalidMoveException("No possible moves found Chase " + j);
+                   throw new InvalidMoveException("No possible moves found Chase " + j);
                 }
                 if ((GhostX[j] != DefaultGhostX[j]) || (GhostY[j] != DefaultGhostY[j])) {
                     if(map.GetEachPositionGrid(GhostX[j]+dx[TempShortestDirection],GhostY[j]+dy[TempShortestDirection])instanceof Pacman){
@@ -538,7 +562,7 @@ public class Game {
                 }
             }
             else{
-                System.out.print("Ghost:"+j+" is still in the box");
+               // System.out.print("Ghost:"+j+" is still in the box");
 
             }
             if(!Temp){
@@ -591,7 +615,7 @@ public class Game {
                 }
             }
             else{
-                System.out.print("Ghost:"+j+" is still in the box Frightened");
+               // System.out.print("Ghost:"+j+" is still in the box Frightened");
             }
             if(!Temp){
                 return Temp;
