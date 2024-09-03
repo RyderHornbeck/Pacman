@@ -1,13 +1,9 @@
 package PacmanBackend;
 
-import PacmanFrontend.Updater;
+import PacmanFrontend.UpdateAndCountDown;
 
-import java.io.OptionalDataException;
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 enum RoundOutCome{
@@ -49,14 +45,14 @@ public class Game {
      int GhostEatenScoreTracker;
      int [] GhostJailSentence;
      keyboardDirections PacInput;
-    Updater ScreenUpdater;
+    UpdateAndCountDown UpdateAndCountDown;
     Pacman pacmanClass;
-    public Game(Connection conn, Updater screenUpdater){
+    public Game(Connection conn, UpdateAndCountDown UpdateAndCountDown){
         Default_MapDAO defaultMapDAO = new Default_MapDAO(conn);
         map = defaultMapDAO.getMap();
         highScoreDAO = new HighScoreDAO(conn);
         pacmanClass = new Pacman();
-        Pellets = 240;
+        Pellets = 241;
         PowerPellets = 4;
         PacLives =3;
         StepCounter =0;
@@ -74,7 +70,7 @@ public class Game {
         DefaultGhostX= new int [] {12,13,14,15};
         DefaultGhostY= new int [] {14,14,14,14};
         PacInput = keyboardDirections.right;
-        ScreenUpdater = screenUpdater;
+        this.UpdateAndCountDown = UpdateAndCountDown;
 
         GhostEatenScoreTracker =0;
     }
@@ -154,13 +150,14 @@ public class Game {
       // System.out.println("num of pac = "+ pac);
     }
     public RoundOutCome OneRound(){
-    //Todo:fix game, to many pacman. one round goes through all 3 rounds when only supposed to go go through one
+        UpdateAndCountDown.PacLives(PacLives);
         PowerPelletModeCount =0;
         StepCounter = 0;
         MoveMoversToStart();
         GhostAlgorithimChanger =RandomStepCount;
         currentGhostAlgorithim =GhostAlgorithim.RANDOM;
         GhostJailSentence= new int []{5,10,15,20};
+        UpdateAndCountDown.startCountDown();
             while(PelletTracker() || PowerPelletTracker()) {
                // System.out.println("111");
                 try {
@@ -175,8 +172,8 @@ public class Game {
 
 
                 }
-
             }
+
         return RoundOutCome.WIN;
 
 
@@ -206,7 +203,7 @@ public class Game {
         if(Score>temp) {
             System.out.println("SCORE: "+Score);
         }
-        ScreenUpdater.update();
+        UpdateAndCountDown.update();
 
         return PacDieOrWin && GhostDieOrWin;
 
@@ -275,6 +272,8 @@ public class Game {
             else if(Nextobj instanceof Pellet){
                 Score= Score+10;
                 Pellets--;
+                System.out.println(Pellets);
+
             }
             else if(Nextobj == null){
 
@@ -476,27 +475,28 @@ public class Game {
                     ValidDirections.add(j);
                 }
             }
-            int Random = (int) (Math.random() * ValidDirections.size());
-            RandomDirections[i] = ValidDirections.get(Random);
+            int dx = 0;
+            int dy = 0;
+            if(ValidDirections.size()>0) {
+                int Random = (int) (Math.random() * ValidDirections.size());
+                RandomDirections[i] = ValidDirections.get(Random);
 
-       //for(int i=0;i<GhostX.length;i++){
-            int dx =0;
-            int dy =0;
-            if(RandomDirections[i]==0){
-                dy=-1;
 
-            }
-            else if(RandomDirections[i]==1){
-                dx=1;
+                //for(int i=0;i<GhostX.length;i++){
 
-            }
-            else if(RandomDirections[i]==2){
-                dy=+1;
+                if (RandomDirections[i] == 0) {
+                    dy = -1;
 
-            }
-            else if(RandomDirections[i]==3){
-                dx=-1;
+                } else if (RandomDirections[i] == 1) {
+                    dx = 1;
 
+                } else if (RandomDirections[i] == 2) {
+                    dy = +1;
+
+                } else if (RandomDirections[i] == 3) {
+                    dx = -1;
+
+                }
             }
             if((GhostX[i]!=DefaultGhostX[i])||(GhostY[i]!=DefaultGhostY[i])) {
                 if(map.GetEachPositionGrid(GhostX[i]+dx,GhostY[i]+dy)instanceof Pacman){

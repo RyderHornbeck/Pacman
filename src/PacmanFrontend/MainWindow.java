@@ -10,13 +10,24 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class MainWindow implements Updater{
+
+public class MainWindow implements UpdateAndCountDown{
+    JPanel Countdownpanel;
+    JPanel PacManLives1;
+    JLabel PacLives1;
+    JPanel PacManLives2;
+    JLabel PacLives2;
+    JPanel PacManLives3;
+    JLabel PacLives3;
+    JLabel countdown;
     Connection conn;
     Game game;
     JPanel gameGrid;
+    JLayeredPane LayeredPane;
     JLabel [][] LabelObj;
     ImageIcon CherryPic;
     ImageIcon BlackSquarePic;
@@ -25,12 +36,16 @@ public class MainWindow implements Updater{
     ImageIcon [] GhostDecider;
     ImageIcon PelletPic;
     ImageIcon PacmanPic;
+    ImageIcon PacmanPicLives;
+
     ImageIcon RightPacmanPic;
     ImageIcon LeftPacmanPic;
     ImageIcon DownPacmanPic;
     ImageIcon PacmanUpPic;
     ImageIcon PacmanPicDecider;
-
+    ImageIcon Red3Pic;
+    ImageIcon Red2Pic;
+    ImageIcon Red1Pic;
     ImageIcon [] GhostsPics;
     public static void main(String[] args) {
 
@@ -55,6 +70,11 @@ public class MainWindow implements Updater{
         Image image = PacmanPic.getImage();
         Image newimg = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         PacmanPic = new ImageIcon(newimg);
+
+        PacmanPicLives = new ImageIcon("C:\\Users\\ryder\\Downloads\\PACMANwithdarkoutline.png");
+        Image image2 = PacmanPicLives.getImage();
+        Image newimg2 = image2.getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+        PacmanPicLives = new ImageIcon(newimg2);
 
         PacmanPicDecider =PacmanPic;
 
@@ -98,6 +118,21 @@ public class MainWindow implements Updater{
         Image PowerPelletnewimg = PowerPelletimage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         PowerPelletPic = new ImageIcon(PowerPelletnewimg);
 
+        Red3Pic = new ImageIcon("C:\\Users\\ryder\\Downloads\\red3.jpg");
+        Image Red3image = Red3Pic.getImage();
+        Image Red3newimg = Red3image.getScaledInstance(150, 250, Image.SCALE_SMOOTH);
+        Red3Pic = new ImageIcon(Red3newimg);
+
+        Red2Pic = new ImageIcon("C:\\Users\\ryder\\Downloads\\red2.jpg");
+        Image Red2image = Red2Pic.getImage();
+        Image Red2newimg = Red2image.getScaledInstance(150, 250, Image.SCALE_SMOOTH);
+        Red2Pic = new ImageIcon(Red2newimg);
+
+        Red1Pic = new ImageIcon("C:\\Users\\ryder\\Downloads\\RED1.jfif");
+        Image Red1image = Red1Pic.getImage();
+        Image Red1newimg = Red1image.getScaledInstance(150, 250, Image.SCALE_SMOOTH);
+        Red1Pic = new ImageIcon(Red1newimg);
+
         GhostsPics = new ImageIcon[4];
 
         GhostsPics[0] = new ImageIcon("C:\\Users\\ryder\\IdeaProjects\\Pacman\\src\\PacmanFrontend\\RedGhost.png");
@@ -126,8 +161,8 @@ public class MainWindow implements Updater{
         game = new Game(conn, this);
         gameGrid = new JPanel(new GridLayout(game.getNumCol(), game.getNumRow()));
         LabelObj = new JLabel[game.getNumRow()][game.getNumCol()];
-
-        for (int j = 0; j < game.getNumCol(); j++) {
+        LayeredPane = new JLayeredPane();
+        for  (int j = 0; j < game.getNumCol(); j++) {
             for (int i = 0; i < game.getNumRow(); i++) {
 
                 LabelObj[i][j] = new JLabel();
@@ -143,12 +178,52 @@ public class MainWindow implements Updater{
                  UnsupportedLookAndFeelException ex) {
             ex.printStackTrace();
         }
+        countdown = new JLabel();
+        Countdownpanel = new JPanel();
+        Countdownpanel.setBackground(Color.GRAY);
+        Countdownpanel.setVisible(false);
+        Countdownpanel.setBounds(550, 200, 150, 250);
+        Countdownpanel.add(countdown);
+        LayeredPane.add(Countdownpanel,JLayeredPane.DEFAULT_LAYER);
 
+        PacLives1 = new JLabel();
+        PacManLives1 = new JPanel();
+        PacManLives1.setBackground(Color.GRAY);
+        PacManLives1.setVisible(false);
+        PacManLives1.setBounds(20, 20, 70, 70);
+        PacManLives1.add(PacLives1);
+        LayeredPane.add(PacManLives1,JLayeredPane.DEFAULT_LAYER);
+
+
+        PacLives2 = new JLabel();
+        PacManLives2 = new JPanel();
+        PacManLives2.setBackground(Color.GRAY);
+        PacManLives2.setVisible(false);
+        PacManLives2.setBounds(90, 20, 70, 70);
+        PacManLives2.add(PacLives2);
+        LayeredPane.add(PacManLives2,JLayeredPane.DEFAULT_LAYER);
+
+        PacLives3 = new JLabel();
+        PacManLives3 = new JPanel();
+        PacManLives3.setBackground(Color.GRAY);
+        PacManLives3.setVisible(false);
+        PacManLives3.setBounds(160, 20, 70, 70);
+        PacManLives3.add(PacLives3);
+        LayeredPane.add(PacManLives3,JLayeredPane.DEFAULT_LAYER);
+//TODO:set window size
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice gd = ge.getDefaultScreenDevice();
         JFrame frame = new JFrame("Testing");
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        gameGrid.setBackground(Color.WHITE);
+        gameGrid.setBounds(350, 10, 560, 650);
 
 
-        frame.add(gameGrid);
+        LayeredPane.add(gameGrid,JLayeredPane.DEFAULT_LAYER);
+
+
+        frame.add(LayeredPane);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.addKeyListener(new KeyListener() {
@@ -272,4 +347,59 @@ public class MainWindow implements Updater{
              }
          }
      }
+
+    @Override
+    public void startCountDown() {
+         Countdownpanel.setVisible(true);
+         countdown.setIcon(Red3Pic);
+         try {
+             TimeUnit.MILLISECONDS.sleep(1300);
+         } catch (InterruptedException e) {
+             throw new RuntimeException(e);
+         }
+        countdown.setIcon(Red2Pic);
+        try {
+            TimeUnit.MILLISECONDS.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        countdown.setIcon(Red1Pic);
+        try {
+            TimeUnit.MILLISECONDS.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        Countdownpanel.setVisible(false);
+    }
+
+    @Override
+    public void PacLives(int lives) {
+        if(lives ==0){
+            PacLives1.setVisible(false);
+        }
+        if(lives ==1){
+            PacManLives1.setVisible(true);
+            PacLives1.setIcon(PacmanPicLives);
+            PacManLives2.setVisible(false);
+            PacManLives3.setVisible(false);
+
+        }
+        else if(lives ==2){
+            PacManLives1.setVisible(true);
+            PacLives1.setIcon(PacmanPicLives);
+            PacManLives2.setVisible(true);
+            PacLives2.setIcon(PacmanPicLives);
+            PacManLives3.setVisible(false);
+
+        }
+        else if(lives ==3) {
+            PacManLives1.setVisible(true);
+            PacLives1.setIcon(PacmanPicLives);
+            PacManLives2.setVisible(true);
+            PacLives2.setIcon(PacmanPicLives);
+            PacManLives3.setVisible(true);
+            PacLives3.setIcon(PacmanPicLives);
+        }
+
+    }
 }
