@@ -52,7 +52,7 @@ public class Game {
         map = defaultMapDAO.getMap();
         highScoreDAO = new HighScoreDAO(conn);
         pacmanClass = new Pacman();
-        Pellets = 241;
+        Pellets = 240;
         PowerPellets = 4;
         PacLives =3;
         StepCounter =0;
@@ -114,6 +114,8 @@ public class Game {
                         break;
                     case RoundOutCome.DIE:
                         PacLives--;
+                        UpdateAndCountDown.PacLives(PacLives);
+
                         //do something
                         break;
                     default:
@@ -161,6 +163,7 @@ public class Game {
             while(PelletTracker() || PowerPelletTracker()) {
                // System.out.println("111");
                 try {
+                    //275
                     TimeUnit.MILLISECONDS.sleep(275);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -202,6 +205,7 @@ public class Game {
         StepCounter++;
         if(Score>temp) {
             System.out.println("SCORE: "+Score);
+           UpdateAndCountDown.getScore(Score);
         }
         UpdateAndCountDown.update();
 
@@ -364,20 +368,10 @@ public class Game {
      //public void EndGame(){}
 
     public boolean PelletTracker(){
-        if(Pellets>=1){
-            return true;
-        }
-        else{
-        return false;
-        }
+        return Pellets >= 1;
     }
     public boolean PowerPelletTracker(){
-        if(PowerPellets>=1){
-            return true;
-        }
-        else{
-            return false;
-        }
+        return PowerPellets >= 1;
     }
 
     public void PowerPelletEaten(){

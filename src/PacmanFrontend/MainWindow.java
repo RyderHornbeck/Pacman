@@ -5,17 +5,17 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 
 
 public class MainWindow implements UpdateAndCountDown{
+    JLabel Label;
+    JPanel Scorepanel;
+    JLabel Scorelabel;
     JPanel Countdownpanel;
     JPanel PacManLives1;
     JLabel PacLives1;
@@ -210,18 +210,43 @@ public class MainWindow implements UpdateAndCountDown{
         PacManLives3.setBounds(160, 20, 70, 70);
         PacManLives3.add(PacLives3);
         LayeredPane.add(PacManLives3,JLayeredPane.DEFAULT_LAYER);
+
+        Label = new JLabel("Test");
+        Label.setText("HighScore:\n500");
+
+        HighScoreDAO highScoreDAO = new HighScoreDAO(conn);
+
+        JPanel HighScorepanel = new JPanel();
+        JLabel HighScorelabel = new JLabel("HighScore:"+highScoreDAO.getEveryonesHighScore());
+        HighScorelabel.setFont(new Font("0", Font.PLAIN, 40));
+        HighScorepanel.add(HighScorelabel);
+        HighScorepanel.setBounds(950,0,300,60);
+        HighScorepanel.setVisible(true);
+
+        Scorepanel = new JPanel();
+        Scorelabel = new JLabel("Score:0");
+        // Add the label to the panel
+        Scorelabel.setFont(new Font("0", Font.PLAIN, 40));
+        Scorepanel.add(Scorelabel);
+        Scorepanel.setBounds(950,60,300,70);
+        Scorepanel.setVisible(true);
+
+
+        // Add the panel to the frame
+
 //TODO:set window size
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice gd = ge.getDefaultScreenDevice();
         JFrame frame = new JFrame("Testing");
 
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gameGrid.setBackground(Color.WHITE);
         gameGrid.setBounds(350, 10, 560, 650);
-
-
         LayeredPane.add(gameGrid,JLayeredPane.DEFAULT_LAYER);
 
+        frame.add(HighScorepanel);
+        frame.add(Scorepanel);
 
         frame.add(LayeredPane);
         frame.pack();
@@ -266,12 +291,16 @@ public class MainWindow implements UpdateAndCountDown{
 
 
         });
+
+
         frame.setVisible(true);
         game.executeGame(ID);
 
 
 
+
     }
+
  public int Login(Connection conn){
 
 
@@ -353,7 +382,7 @@ public class MainWindow implements UpdateAndCountDown{
          Countdownpanel.setVisible(true);
          countdown.setIcon(Red3Pic);
          try {
-             TimeUnit.MILLISECONDS.sleep(1300);
+             TimeUnit.MILLISECONDS.sleep(1000);
          } catch (InterruptedException e) {
              throw new RuntimeException(e);
          }
@@ -375,6 +404,7 @@ public class MainWindow implements UpdateAndCountDown{
     @Override
     public void PacLives(int lives) {
         if(lives ==0){
+            PacManLives1.setBackground(Color.white);
             PacLives1.setVisible(false);
         }
         if(lives ==1){
@@ -402,4 +432,17 @@ public class MainWindow implements UpdateAndCountDown{
         }
 
     }
+
+    public void UpdateScreenHighScore (int score){
+        Scorelabel.setText("Score:"+score);
+    }
+    @Override
+    public void getScore(int score){
+        UpdateScreenHighScore(score);
+
+    }
+
+
+
+
 }

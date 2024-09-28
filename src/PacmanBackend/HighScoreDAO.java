@@ -20,6 +20,17 @@ public class HighScoreDAO extends BaseDataAccessObject{
         }
         return -1;
     }
+    public int getEveryonesHighScore(){
+        try{
+            ResultSet result = execute("SELECT MAX(HIGH_SCORE)AS max_highscore FROM USERS");
+            int highscore =  result.getInt("max_highscore");
+            return highscore;
+        }
+        catch(SQLException SQL){
+            SQL.getMessage();
+        }
+        return -1;
+    }
     public void setHighScore(int id , int HS){
           String settingHighScore ="UPDATE USERS SET HIGH_SCORE ="+ HS +" WHERE ID ="+id;
         try {
